@@ -1,0 +1,13 @@
+.fields-horizontal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row; 
+    gap: 12px; 
+}
+
+.picklist-container {
+    width: 200px;
+    max-height: 255px;
+}
+

@@ -1,0 +1,14 @@
+<template>
+    <div class="container">
+        <div class="fields-horizontal-container">
+            <div class="picklist-container">
+                <lightning-combobox name="oneVest" value={oneVestFieldValue}
+                    options={oVestFields} onchange={oneVestFieldChange}></lightning-combobox>
+            </div>
+            <div class="picklist-container">
+                <lightning-combobox  name="salesforce" value={salesforceFieldValue}
+                    options={salesforceFields} onchange={salesforceFieldChange}></lightning-combobox>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,4 +1,4 @@
-import { LightningElement,track } from 'lwc';
+import { LightningElement, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import fetchAllFields from '@salesforce/apex/fetchingObjectsAndFields.fetchAllFields';
 
@@ -8,73 +8,105 @@ export default class FieldsMapping extends LightningElement {
     oneVestObjectFields = [];
     fieldsMapping = [];
     oneVestMappedFields = [];
-    salesfroceMappedFields = [];
-    fieldsMappingCache = [];
+    salesforceMappedFields = [];
     id = 0;
-    counter = 0;
+    oneVestJSON = ['id', 'name', 'age', 'number'];
 
-    oneVestJSON = ['id','name','age','number']
+    connectedCallback() {
+        // Adding one child component on page
+        this.addChildComponent();
 
-    connectedCallback(){
+        // Fetching and initializing Salesforce Fields
+        fetchAllFields({ objectName: 'Account' })
+            .then(result => {
+                this.salesforceObjectFields = Object.keys(result).map(key => ({
+                    label: result[key],
+                    value: result[key]
+                }));
+            })
+            .catch(error => {
+                console.error('Error in fetching fields:', error);
+            });
 
-        //adding one child component on page
-        this.childComponents.push({ key: this.id });
-        this.counter++;
-        this.id++;
-
-        //fetching and initializing salesforce Fields
-        fetchAllFields({ objectName: "Account" })
-        .then(result => {
-            for (let key in result) {
-                const temp = [{ label: result[key], value: result[key]}];
-                this.salesforceObjectFields = [...this.salesforceObjectFields, ...temp];
-            }
-        })
-        .catch(error => {
-                console.log('Error in fetching fields');
-        });
-
-        //creating OneVest Fields from JSONList
-        for(let key in this.oneVestJSON){
-            const temp = [{ label: this.oneVestJSON[key], value: this.oneVestJSON[key]}];
-            this.oneVestObjectFields = [...this.oneVestObjectFields,...temp];
-        }
+        // Creating OneVest Fields from JSONList
+        this.oneVestObjectFields = this.oneVestJSON.map(field => ({
+            label: field,
+            value: field
+        }));
     }
 
     addChild() {
-        //if(this.counter < 10){
-            this.childComponents.push({ key: this.id});
-            this.counter++;
-            this.id++;
-        //}
+        this.addChildComponent();
     }
 
-    saveCacheFieldsMap(event){
-        //console.log('Event Detail: ',JSON.stringify(event.detail));
-        if(this.oneVestMappedFields.includes(event.detail.OneVestField)){
-            this.dispatchEvent(this.dispatchToastEvent('Error!', `OneVestField: ${event.detail.OneVestField} has alreday been mapped` , 'error'));
-            return;
-        }
-        else if(this.salesfroceMappedFields.includes(event.detail.SalesforceField)){
-            this.dispatchEvent(this.dispatchToastEvent('Error!', `SalesforceField: ${event.detail.SalesforceField} has alreday been mapped` , 'error'));
-            return;
-        }
-        else{
-            this.oneVestMappedFields.push(event.detail.OneVestField);
-            this.salesfroceMappedFields.push(event.detail.SalesforceField);
-            this.fieldsMappingCache.push(event.detail);
-            console.log('Temporary data: ',JSON.stringify(this.fieldsMappingCache));
-        }
-        
-    }
-
-    saveFieldsMap(){
-        this.fieldsMapping = [...this.fieldsMapping ,...this.fieldsMappingCache];
-        this.counter= 0;
-        this.fieldsMappingCache = [];
-        this.childComponents = [];
+    addChildComponent() {
         this.childComponents.push({ key: this.id });
-        console.log('Field Mapping: ',JSON.stringify(this.fieldsMapping));
+        this.id++;
+    }
+
+    handleValidateField(event) {
+        const { Type, Value } = event.detail;
+        const fieldArray = Type === 'OneVest' ? this.oneVestMappedFields : this.salesforceMappedFields;
+
+        if (fieldArray.includes(Value)) {
+            this.dispatchToastEvent('Error!', `${Type}Field: ${Value} has already been mapped`, 'error');
+        }
+    }
+
+    handleUpdateMappedFieldList(event) {
+        const { FieldType, PrevValue, NewValue } = event.detail;
+        const fieldArray = FieldType === 'OneVest' ? this.oneVestMappedFields : this.salesforceMappedFields;
+
+        if (PrevValue) {
+            fieldArray.splice(fieldArray.indexOf(PrevValue), 1);
+        }
+        fieldArray.push(NewValue);
+    }
+
+    saveFieldsMap() {
+        let isError = false;
+        const backupOneVest = [...this.oneVestMappedFields];
+        const backupSalesforce = [...this.salesforceMappedFields];
+        this.template.querySelectorAll('c-mapping-picklist').forEach(element => {
+            const oVestValue = element.oVestValue;
+            const salesForceValue = element.salesForceValue;
+
+            if (oVestValue && salesForceValue) {
+                if (!this.oneVestMappedFields.includes(oVestValue) || !this.salesforceMappedFields.includes(salesForceValue)) {
+                    this.dispatchToastEvent('Error!', 'Wrong Mapping: One Field is mapped twice', 'error');
+                    this.salesforceMappedFields = [...backupSalesforce];
+                    this.oneVestMappedFields = [...backupOneVest];
+                    this.fieldsMapping = [];
+                    isError = true;
+                    return;
+                }
+
+                const tempMap = {
+                    OneVestField: oVestValue,
+                    SalesforceField: salesForceValue
+                };
+
+                this.salesforceMappedFields=this.salesforceMappedFields.filter(obj=>obj !== salesForceValue);
+                this.oneVestMappedFields=this.oneVestMappedFields.filter(obj=> obj !== oVestValue);
+                this.fieldsMapping.push(tempMap);
+            } else {
+                this.dispatchToastEvent('Error!', 'Mapping Elements missing', 'error');
+                isError = true;
+                this.salesforceMappedFields = [...backupSalesforce];
+                this.oneVestMappedFields = [...backupOneVest];
+                this.fieldsMapping = [];
+                return;
+            }
+        });
+
+        if (!isError) {
+            this.dispatchToastEvent('Success!', 'Fields have been mapped', 'success');
+            console.log('Field Mapping:', JSON.stringify(this.fieldsMapping));
+            this.salesforceMappedFields = [...backupSalesforce];
+            this.oneVestMappedFields = [...backupOneVest];
+            this.fieldsMapping = [];
+            this.addChildComponent();
+        }
     }
 
     dispatchToastEvent(title, message, variant) {

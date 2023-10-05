@@ -1,4 +1,4 @@
-import { LightningElement,track,api } from 'lwc';
+import { LightningElement, api } from 'lwc';
 
 export default class MappingPicklist extends LightningElement {
     @api salesforceFields = [];
@@ -6,21 +6,42 @@ export default class MappingPicklist extends LightningElement {
     salesforceFieldValue;
     oneVestFieldValue;
 
-    oneVestFieldChange(event) {
+    @api get salesForceValue() {
+        return this.salesforceFieldValue;
+    }
+
+    @api get oVestValue() {
+        return this.oneVestFieldValue;
+    }
+
+    handleOneVestFieldChange(event) {
+        const prevVal = this.oneVestFieldValue;
+        this.checkField('OneVest', event.detail.value);
         this.oneVestFieldValue = event.detail.value;
-        this.creatingFieldMap();
+        this.handleValueChange('OneVest', prevVal, this.oneVestFieldValue);
     }
 
-    salesforceFieldChange(event) {
+    handleSalesforceFieldChange(event) {
+        const prevVal = this.salesforceFieldValue;
+        this.checkField('Salesforce', event.detail.value);
         this.salesforceFieldValue = event.detail.value;
-        this.creatingFieldMap();
+        this.handleValueChange('Salesforce', prevVal, this.salesforceFieldValue);
     }
 
-    creatingFieldMap(){
-        if(this.salesforceFieldValue && this.oneVestFieldValue){
-            let paramData = {OneVestField:this.oneVestFieldValue,
-                                SalesforceField: this.salesforceFieldValue};
-            this.dispatchEvent(new CustomEvent('savemap',{detail: paramData}));
-        }
+    checkField(type, value) {
+        const paramData = {
+            Type: type,
+            Value: value
+        };
+        this.dispatchEvent(new CustomEvent('validatefield', { detail: paramData }));
+    }
+
+    handleValueChange(type, prevVal, newVal) {
+        const paramData = {
+            FieldType: type,
+            PrevValue: prevVal,
+            NewValue: newVal
+        };
+        this.dispatchEvent(new CustomEvent('fieldchange', { detail: paramData }));
     }
 }

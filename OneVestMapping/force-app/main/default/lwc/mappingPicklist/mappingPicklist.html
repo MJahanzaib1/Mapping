@@ -2,12 +2,12 @@
     <div class="container">
         <div class="fields-horizontal-container">
             <div class="picklist-container">
-                <lightning-combobox name="oneVest" value={oneVestFieldValue}
-                    options={oVestFields} onchange={oneVestFieldChange}></lightning-combobox>
+                <lightning-combobox class="one-vest" value={oneVestFieldValue}
+                    options={oVestFields} onchange={handleOneVestFieldChange}></lightning-combobox>
             </div>
             <div class="picklist-container">
-                <lightning-combobox  name="salesforce" value={salesforceFieldValue}
-                    options={salesforceFields} onchange={salesforceFieldChange}></lightning-combobox>
+                <lightning-combobox class="salesforce" value={salesforceFieldValue}
+                    options={salesforceFields} onchange={handleSalesforceFieldChange}></lightning-combobox>
             </div>
         </div>
     </div>

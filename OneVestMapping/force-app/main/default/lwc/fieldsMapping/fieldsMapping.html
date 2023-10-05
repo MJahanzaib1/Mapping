@@ -7,17 +7,19 @@
             </div>
             <div class="container">
                 <div class="child-container" for:each={childComponents} for:item="child" key={child.key}>
-                    <c-mapping-picklist onsavemap={saveCacheFieldsMap} 
-                            salesforce-fields={salesforceObjectFields}
-                            o-vest-fields={oneVestObjectFields}></c-mapping-picklist>
-                </div>   
+                    <c-mapping-picklist
+                        onvalidatefield={handleValidateField}
+                        salesforce-fields={salesforceObjectFields}
+                        o-vest-fields={oneVestObjectFields}
+                        onfieldchange={handleUpdateMappedFieldList}
+                    ></c-mapping-picklist>
+                </div>
             </div>
             <div class="btn-container">
-                <lightning-button class="addChild-button" label="+ Field Mapping" variant="brand-outline"
-                onclick={addChild}></lightning-button>
-                <lightning-button class="save-button" label="Save" variant="brand"
-                onclick={saveFieldsMap}></lightning-button> 
-            </div>     
+                <lightning-button class="add-child-button" label="+ Field Mapping" variant="brand-outline"
+                    onclick={addChild}></lightning-button>
+                <lightning-button class="save-button" label="Save" variant="brand" onclick={saveFieldsMap}></lightning-button>
+            </div>
         </lightning-card>
     </div>
 </template>
